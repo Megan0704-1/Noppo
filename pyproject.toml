@@ -1,11 +1,12 @@
 [tool.poetry]
-name = "google"
-version = "21.0.1"
+name = "noppo"
+version = "0.1.0"
 description = ""
 authors = ["ShaoXiangChien <79143079+ShaoXiangChien@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+google = "21.0.1"
 
 [tool.poetry.dev-dependencies]
 
