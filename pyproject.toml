@@ -6,7 +6,7 @@ authors = ["ShaoXiangChien <79143079+ShaoXiangChien@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-google = "^3.0.0"
+google = "3.0.0"
 
 [tool.poetry.dev-dependencies]
 
