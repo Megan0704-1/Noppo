@@ -3,6 +3,17 @@ import streamlit as st
 import pandas as pd
 from google.cloud import firestore
 
+# st.markdown(
+#     f"""
+#     <style>
+#     .reportview-container {{
+#         background-color: black
+#     }}
+#     </style>
+#     """,
+#     unsafe_allow_html=True
+# )
+
 df = firestore.Client.from_service_account_json(
     './netflix-comment-system-firebase-adminsdk-hq5cn-9c691199bd.json')
 
@@ -29,7 +40,7 @@ else:
         drama_df['related_fb_post'] = drama_df['related_fb_post'].apply(
             lambda x: str(x)[1:-1].split(', ') if x != '[]' else [])
         comments_df = pd.read_csv(
-            '../Comments_from_fb.csv', index_col='comment_id')
+            './Comments_from_fb.csv', index_col='comment_id')
         img_url = drama_df.loc[query]['img']
         introduction = drama_df.loc[query]['info']
         scores = {'豆瓣': drama_df.loc[query]['douban'], 'IMDb': drama_df.loc[query]['imdb'], '爛番茄': (
