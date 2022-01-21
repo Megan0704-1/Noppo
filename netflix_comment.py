@@ -19,68 +19,63 @@ df = firestore.Client.from_service_account_json(
 
 st.sidebar.title('Netflixm原創影劇評論檢索系統')
 drama_list = [d.id for d in df.collection('Comments').get()]
-radio = st.sidebar.radio('選擇模式', ('選單', '搜尋'))
-if radio == '選單':
-    selection = st.sidebar.selectbox(
-        '所有影劇列表', drama_list, drama_list.index('魷魚遊戲'))
-    st.title(selection)
-    query = selection
-else:
-    search_query = st.sidebar.text_input('輸入想找的劇')
-    st.title(search_query)
-    query = search_query
+selection = st.sidebar.selectbox(
+    '展開列表選擇或直接搜尋', drama_list, drama_list.index('魷魚遊戲'))
+st.title(selection)
+query = selection
 
 if query not in drama_list:
     st.write('Not found')
 else:
     # Data Preparation
 
-    try:
-        drama_df = pd.read_csv('./drama_complete_df.csv', index_col='name')
-        drama_df['related_fb_post'] = drama_df['related_fb_post'].apply(
-            lambda x: str(x)[1:-1].split(', ') if x != '[]' else [])
-        comments_df = pd.read_csv(
-            './Comments_from_fb.csv', index_col='comment_id')
-        img_url = drama_df.loc[query]['img']
-        introduction = drama_df.loc[query]['info']
-        scores = {'豆瓣': drama_df.loc[query]['douban'], 'IMDb': drama_df.loc[query]['imdb'], '爛番茄': (
-            drama_df.loc[query]['rt_tm'], drama_df.loc[query]['rt_ad'])}
-        all_comment = []
-        for c_id in drama_df.loc[query]['related_fb_post']:
-            comment = comments_df.loc[int(c_id)]
-            cm_dt = dict()
-            try:
-                cm_dt['time'] = comment['comment_time']
-                cm_dt['text'] = comment['comment_text']
-                cm_dt['sentiment'] = round(comment['sentiment']*10, 2)
-                all_comment.append(cm_dt)
-            except Exception as err:
-                print(err)
-    except Exception as e:
-        print(e)
-        doc_ref = df.collection('Comments').document(query)
-        img_url = doc_ref.get().get('img')
-        introduction = doc_ref.get().get('info')
-        scores = {'豆瓣': 'None', 'IMDb': 'None', '爛番茄': 'None'}
-        for doc in doc_ref.collection('scores').stream():
-            dt = doc.to_dict()
-            scores[dt['source']] = (dt['tomatometer'], dt['audience']
-                                    ) if dt['source'] == '爛番茄' else dt['score']
-        print('Scores loaded')
-        all_comment = []
-        for doc in doc_ref.collection('related_posts').stream():
-            post_id = doc.to_dict()['post_id']
-            for comment in df.collection('Posts').document(str(post_id)).collection('comments').stream():
-                cm_dt = dict()
-                comment = comment.to_dict()
-                try:
-                    cm_dt['time'] = comment['time']
-                    cm_dt['text'] = comment['text']
-                    cm_dt['sentiment'] = comment['sentiment']
-                    all_comment.append(cm_dt)
-                except Exception as err:
-                    continue
-        print('comments loaded')
+    # try:
+    #     drama_df = pd.read_csv('./drama_complete_df.csv', index_col='name')
+    #     drama_df['related_fb_post'] = drama_df['related_fb_post'].apply(
+    #         lambda x: str(x)[1:-1].split(', ') if x != '[]' else [])
+    #     comments_df = pd.read_csv(
+    #         './Comments_from_fb.csv', index_col='comment_id')
+    #     img_url = drama_df.loc[query]['img']
+    #     introduction = drama_df.loc[query]['info']
+    #     scores = {'豆瓣': drama_df.loc[query]['douban'], 'IMDb': drama_df.loc[query]['imdb'], '爛番茄': (
+    #         drama_df.loc[query]['rt_tm'], drama_df.loc[query]['rt_ad'])}
+    #     all_comment = []
+    #     for c_id in drama_df.loc[query]['related_fb_post']:
+    #         comment = comments_df.loc[int(c_id)]
+    #         cm_dt = dict()
+    #         try:
+    #             cm_dt['time'] = comment['comment_time']
+    #             cm_dt['text'] = comment['comment_text']
+    #             cm_dt['sentiment'] = round(comment['sentiment']*10, 2)
+    #             all_comment.append(cm_dt)
+    #         except Exception as err:
+    #             print(err)
+    # except Exception as e:
+    #     print(e)
+    doc_ref = df.collection('Comments').document(query)
+    doc_dt = doc_ref.get().to_dict()
+    img_url = doc_ref.get().get('img')
+    introduction = doc_ref.get().get('info')
+    scores = {'豆瓣': doc_dt['豆瓣'], 'IMDb': doc_ref.get().get(
+        'imdb'), '爛番茄': (doc_ref.get().get('rt_tm'), doc_ref.get().get('rt_aad'))}
+    print('Scores loaded')
+    all_comment = []
+    for doc in doc_ref.collection('comments').stream():
+        comment_id = doc.get('comment_id')
+        if comment_id == "":
+            continue
+        cm_dt = dict()
+        comment = df.collection('comments').document(
+            str(comment_id)).get().to_dict()
+        try:
+            cm_dt['time'] = comment['time']
+            cm_dt['text'] = comment['text']
+            cm_dt['sentiment'] = round(comment['sentiment']*10, 2)
+            all_comment.append(cm_dt)
+        except Exception as err:
+            print(err)
+            continue
+    print('comments loaded')
 
     # UI rendering
     if img_url != 'None':
