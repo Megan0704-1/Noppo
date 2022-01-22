@@ -1,7 +1,10 @@
 from datetime import datetime
+import jieba
+from wordcloud import WordCloud
 import streamlit as st
 import pandas as pd
 from google.cloud import firestore
+import matplotlib.pyplot as plt
 
 # st.markdown(
 #     f"""
@@ -13,7 +16,7 @@ from google.cloud import firestore
 #     """,
 #     unsafe_allow_html=True
 # )
-
+st.set_option('deprecation.showPyplotGlobalUse', False)
 df = firestore.Client.from_service_account_json(
     './netflix-comment-system-firebase-adminsdk-hq5cn-9c691199bd.json')
 
@@ -59,6 +62,8 @@ else:
     scores = {'豆瓣': doc_dt['豆瓣'], 'IMDb': doc_ref.get().get(
         'imdb'), '爛番茄': (doc_ref.get().get('rt_tm'), doc_ref.get().get('rt_aad'))}
     print('Scores loaded')
+    data = []
+    date = []
     all_comment = []
     for doc in doc_ref.collection('comments').stream():
         comment_id = doc.get('comment_id')
@@ -68,15 +73,48 @@ else:
         comment = df.collection('comments').document(
             str(comment_id)).get().to_dict()
         try:
-            cm_dt['time'] = comment['time']
+            try:
+                cm_dt['time'] = datetime.strptime(
+                    str(comment['time']), '%Y-%m-%d %H:%M:%S')
+            except:
+                cm_dt['time'] = comment['time']
             cm_dt['text'] = comment['text']
             cm_dt['sentiment'] = round(comment['sentiment']*10, 2)
             all_comment.append(cm_dt)
+            data.append(cm_dt['sentiment'])
+            date.append(cm_dt['time'].strftime('%Y-%m-%d'))
         except Exception as err:
             print(err)
             continue
-    print('comments loaded')
+    print('fb comments loaded')
 
+    dcard_comment = []
+    for doc in doc_ref.collection('dcard_cms').stream():
+        dt = doc.to_dict()
+        c_dt = dict()
+        c_dt['text'] = dt['text']
+        c_dt['sentiment'] = round(dt['sentiment']*10, 2)
+        dcard_comment.append(c_dt)
+        data.append(c_dt['sentiment'])
+
+    print('dcard comments loaded')
+
+    jieba.dt.cache_file = 'jieba.cache.new'
+    all_text = ""
+    for cm in all_comment:
+        all_text += cm['text']
+
+    for cm in dcard_comment:
+        all_text += cm['text']
+    with open('./stopwords.txt') as fh:
+        stopword = [d[:-1] for d in fh.readlines()]
+    docs = ' '.join([w for w in jieba.cut(all_text)
+                     if w not in stopword and len(w) > 3])
+    try:
+        wordcloud = WordCloud(
+            margin=2, font_path='./setofont.ttf').generate(docs)
+    except:
+        pass
     # UI rendering
     if img_url != 'None':
         st.image(img_url, width=400)
@@ -124,21 +162,58 @@ else:
             f"<p style='text-align: right;'>情緒分數 {sent}/10</p>", unsafe_allow_html=True)
         # col2.write(f'給分 {sent}')
         col2.write(c['time'])
-    # st.header('迪卡網友這樣說')
-    # col1, col2 = st.columns(2)
 
-    # col1.subheader('喜歡的人認為')
-    # for c in pos_comment:
-    #     col1.write('---')
-    #     col1.write(c[0])
-    #     col1.write(f'給分 {8}')
-    #     col1.write(c[1])
+    if len(date) > 0:
+        st.subheader('留言日期分佈')
+        date = pd.DataFrame(date)
+        try:
+            date.value_counts(sort=False).plot(kind='bar')
+            plt.tight_layout()
+            plt.show()
+            st.pyplot()
+        except:
+            pass
 
-    # col2.subheader('不喜歡的人認為')
-    # for c in neg_comment:
-    #     col2.write('---')
-    #     col2.write(c[0])
-    #     col2.write(f'給分 {9}')
-    #     col2.write(c[1])
+    pos_dc = [c for c in dcard_comment if 9.5 > c['sentiment'] > 5]
+    neg_dc = [c for c in dcard_comment if 1.5 < c['sentiment'] < 5]
+    pos_dc.sort(key=lambda x: float(x['sentiment']), reverse=True)
+    neg_dc.sort(key=lambda x: float(x['sentiment']))
+    st.header('迪卡網友這樣說')
+    col1, col2 = st.columns(2)
 
-    # st.header(f'綜合分數: {8.5}')
+    col1.subheader('喜歡的人認為')
+    pc = pos_dc[:10] if len(pos_dc) > 10 else pos_dc
+    for c in pc:
+        sent = c['sentiment']
+        col1.write('---')
+        col1.write(c['text'])
+        col1.markdown(
+            f"<p style='text-align: right;'>情緒分數 {sent}/10</p>", unsafe_allow_html=True)
+
+    col2.subheader('不喜歡的人認為')
+    nc = neg_dc[:10] if len(neg_dc) > 10 else neg_dc
+    for c in nc:
+        sent = c['sentiment']
+        col2.write('---')
+        col2.write(c['text'])
+        col2.markdown(
+            f"<p style='text-align: right;'>情緒分數 {sent}/10</p>", unsafe_allow_html=True)
+
+    if len(all_text) > 0:
+        try:
+            st.subheader('文字雲')
+            plt.imshow(wordcloud, interpolation='bilinear')
+            plt.axis("off")
+            plt.show()
+            st.pyplot()
+        except:
+            pass
+
+    if len(data) > 0:
+        st.subheader('留言情緒分佈')
+        n, bins, patches = plt.hist(data, bins=20)
+        plt.xlabel("scores")
+        plt.ylabel("frequency")
+        plt.title("Sentiment Score Histogram Plot")
+        plt.show()
+        st.pyplot()
