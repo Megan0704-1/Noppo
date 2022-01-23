@@ -6,24 +6,16 @@ import pandas as pd
 from google.cloud import firestore
 import matplotlib.pyplot as plt
 
-# st.markdown(
-#     f"""
-#     <style>
-#     .reportview-container {{
-#         background-color: black
-#     }}
-#     </style>
-#     """,
-#     unsafe_allow_html=True
-# )
 st.set_option('deprecation.showPyplotGlobalUse', False)
 df = firestore.Client.from_service_account_json(
     './netflix-comment-system-firebase-adminsdk-hq5cn-9c691199bd.json')
 
-st.sidebar.title('Netflixm原創影劇評論檢索系統')
+title = '<p style="font-family:sans-serif; font-size: 42px;">Noppo</p>'
+st.sidebar.markdown(title, unsafe_allow_html=True)
+st.sidebar.header('Netflix原創影劇評價整合平台')
 drama_list = [d.id for d in df.collection('Comments').get()]
 selection = st.sidebar.selectbox(
-    '展開列表選擇或直接搜尋', drama_list, drama_list.index('魷魚遊戲'))
+    '展開選單或直接搜尋', drama_list, drama_list.index('魷魚遊戲'))
 st.title(selection)
 query = selection
 
@@ -31,30 +23,6 @@ if query not in drama_list:
     st.write('Not found')
 else:
     # Data Preparation
-
-    # try:
-    #     drama_df = pd.read_csv('./drama_complete_df.csv', index_col='name')
-    #     drama_df['related_fb_post'] = drama_df['related_fb_post'].apply(
-    #         lambda x: str(x)[1:-1].split(', ') if x != '[]' else [])
-    #     comments_df = pd.read_csv(
-    #         './Comments_from_fb.csv', index_col='comment_id')
-    #     img_url = drama_df.loc[query]['img']
-    #     introduction = drama_df.loc[query]['info']
-    #     scores = {'豆瓣': drama_df.loc[query]['douban'], 'IMDb': drama_df.loc[query]['imdb'], '爛番茄': (
-    #         drama_df.loc[query]['rt_tm'], drama_df.loc[query]['rt_ad'])}
-    #     all_comment = []
-    #     for c_id in drama_df.loc[query]['related_fb_post']:
-    #         comment = comments_df.loc[int(c_id)]
-    #         cm_dt = dict()
-    #         try:
-    #             cm_dt['time'] = comment['comment_time']
-    #             cm_dt['text'] = comment['comment_text']
-    #             cm_dt['sentiment'] = round(comment['sentiment']*10, 2)
-    #             all_comment.append(cm_dt)
-    #         except Exception as err:
-    #             print(err)
-    # except Exception as e:
-    #     print(e)
     doc_ref = df.collection('Comments').document(query)
     doc_dt = doc_ref.get().to_dict()
     img_url = doc_ref.get().get('img')
@@ -116,6 +84,7 @@ else:
             margin=2, font_path='./setofont.ttf').generate(docs)
     except:
         pass
+
     # UI rendering
     if img_url != 'None':
         st.image(img_url, width=400)
@@ -205,16 +174,6 @@ else:
         col2.markdown(
             f"<p style='text-align: right;'>情緒分數 {sent}/10</p>", unsafe_allow_html=True)
 
-    if len(all_text) > 0:
-        try:
-            st.subheader('文字雲')
-            plt.imshow(wordcloud, interpolation='bilinear')
-            plt.axis("off")
-            plt.show()
-            st.pyplot()
-        except:
-            pass
-
     if len(data) > 0:
         st.subheader('留言情緒分佈')
         n, bins, patches = plt.hist(data, bins=20)
@@ -223,3 +182,14 @@ else:
         plt.title("Sentiment Score Histogram Plot")
         plt.show()
         st.pyplot()
+
+    if len(all_text) > 0:
+        try:
+            st.subheader('文字雲')
+            st.write('透過社群留言的文字去產出關鍵字之文字雲')
+            plt.imshow(wordcloud, interpolation='bilinear')
+            plt.axis("off")
+            plt.show()
+            st.pyplot()
+        except:
+            pass
