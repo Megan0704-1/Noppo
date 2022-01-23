@@ -185,7 +185,7 @@ else:
             f"<p style='text-align: right;'>情緒分數 {sent}/10</p>", unsafe_allow_html=True)
 
     if len(dcard_sent) > 0:
-        st.subheader('臉書留言情緒分佈')
+        st.subheader('Dcard留言情緒分佈')
         n, bins, patches = plt.hist(dcard_sent, bins=20)
         plt.xlabel("scores")
         plt.ylabel("frequency")
