@@ -30,7 +30,7 @@ else:
     scores = {'豆瓣': doc_dt['豆瓣'], 'IMDb': doc_ref.get().get(
         'imdb'), '爛番茄': (doc_ref.get().get('rt_tm'), doc_ref.get().get('rt_aad'))}
     print('Scores loaded')
-    data = []
+    fb_sent = []
     date = []
     all_comment = []
     for doc in doc_ref.collection('comments').stream():
@@ -49,7 +49,7 @@ else:
             cm_dt['text'] = comment['text']
             cm_dt['sentiment'] = round(comment['sentiment']*10, 2)
             all_comment.append(cm_dt)
-            data.append(cm_dt['sentiment'])
+            fb_sent.append(cm_dt['sentiment'])
             date.append(cm_dt['time'].strftime('%Y-%m-%d'))
         except Exception as err:
             print(cm_dt['time'])
@@ -57,6 +57,7 @@ else:
             continue
     print('fb comments loaded')
 
+    dcard_sent = []
     dcard_comment = []
     for doc in doc_ref.collection('dcard_cms').stream():
         dt = doc.to_dict()
@@ -64,7 +65,7 @@ else:
         c_dt['text'] = dt['text']
         c_dt['sentiment'] = round(dt['sentiment']*10, 2)
         dcard_comment.append(c_dt)
-        data.append(c_dt['sentiment'])
+        dcard_sent.append(c_dt['sentiment'])
 
     print('dcard comments loaded')
 
@@ -135,6 +136,15 @@ else:
         # col2.write(f'給分 {sent}')
         col2.write(c['time'])
 
+    if len(fb_sent) > 0:
+        st.subheader('臉書留言情緒分佈')
+        n, bins, patches = plt.hist(fb_sent, bins=20)
+        plt.xlabel("scores")
+        plt.ylabel("frequency")
+        plt.title("Sentiment Score Histogram Plot")
+        plt.show()
+        st.pyplot()
+
     if len(date) > 0:
         st.subheader('討論度分佈')
         date = pd.DataFrame(date)
@@ -174,9 +184,9 @@ else:
         col2.markdown(
             f"<p style='text-align: right;'>情緒分數 {sent}/10</p>", unsafe_allow_html=True)
 
-    if len(data) > 0:
-        st.subheader('留言情緒分佈')
-        n, bins, patches = plt.hist(data, bins=20)
+    if len(dcard_sent) > 0:
+        st.subheader('臉書留言情緒分佈')
+        n, bins, patches = plt.hist(dcard_sent, bins=20)
         plt.xlabel("scores")
         plt.ylabel("frequency")
         plt.title("Sentiment Score Histogram Plot")
