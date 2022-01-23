@@ -84,6 +84,7 @@ else:
             data.append(cm_dt['sentiment'])
             date.append(cm_dt['time'].strftime('%Y-%m-%d'))
         except Exception as err:
+            print(cm_dt['time'])
             print(err)
             continue
     print('fb comments loaded')
@@ -139,6 +140,8 @@ else:
     neg_comment.sort(key=lambda x: float(x['sentiment']))
 
     st.header('臉書網友這樣說')
+    st.write(
+        '我們從「NETFLIX 新台灣討論區(非官方)」中找出與該劇相關的貼文並整理底下留言，透過以外送平台評論訓練的情緒分析模型來幫每則留言計算情緒分數，作為分類之依據。')
     col1, col2 = st.columns(2)
 
     col1.subheader('喜歡的人認為')
@@ -164,11 +167,14 @@ else:
         col2.write(c['time'])
 
     if len(date) > 0:
-        st.subheader('留言日期分佈')
+        st.subheader('討論度分佈')
         date = pd.DataFrame(date)
         try:
-            date.value_counts(sort=False).plot(kind='bar')
-            plt.tight_layout()
+            x = [k[0] for k in pd.DataFrame(date).value_counts(
+                sort=False).to_dict().keys()]
+            y = [v for v in pd.DataFrame(date).value_counts(
+                sort=False).to_dict().values()]
+            k = plt.barh(x, y)
             plt.show()
             st.pyplot()
         except:
