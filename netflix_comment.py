@@ -13,7 +13,10 @@ df = firestore.Client.from_service_account_json(
 title = '<p style="font-family:sans-serif; font-size: 42px;">Noppo</p>'
 st.sidebar.markdown(title, unsafe_allow_html=True)
 st.sidebar.header('Netflix原創影劇評價整合平台')
-drama_list = [d.id for d in df.collection('Comments').get()]
+
+with open('./drama_list.txt') as fh:
+    drama_list = [d[:-1] for d in fh.readlines()]
+
 selection = st.sidebar.selectbox(
     '展開選單或直接搜尋', drama_list, drama_list.index('魷魚遊戲'))
 st.title(selection)
@@ -40,6 +43,8 @@ else:
         cm_dt = dict()
         comment = df.collection('comments').document(
             str(comment_id)).get().to_dict()
+        if comment == None:
+            continue
         try:
             try:
                 cm_dt['time'] = datetime.strptime(
