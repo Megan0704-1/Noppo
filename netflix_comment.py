@@ -103,7 +103,7 @@ else:
     with open('./stopwords.txt') as fh:
         stopword = [d[:-1] for d in fh.readlines()]
     docs = ' '.join([w for w in jieba.cut(all_text)
-                     if w not in stopword and len(w) > 3])
+                     if w not in stopword])
     try:
         wordcloud = WordCloud(
             margin=2, font_path='./setofont.ttf').generate(docs)
