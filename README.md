@@ -1,8 +1,6 @@
 # Noppo: Netflix Comment Aggregator & Analyzer
 
-Dive deep into the world of Netflix original series and movies with Noppo! This platform not only aggregates comments and ratings from various sources but also provides insightful sentiment analysis to gauge audience reactions.
-
-![Noppo Logo or Screenshot](https://i.ibb.co/wsphrHZ/2023-10-24-9-58-22.png)
+Dive deep into the world of Netflix's original series and movies with Noppo! This platform not only aggregates comments and ratings from various sources but also provides insightful sentiment analysis to gauge audience reactions.
 
 ## 🚀 Features
 
@@ -12,6 +10,14 @@ Dive deep into the world of Netflix original series and movies with Noppo! This 
 - **Interactive Visualizations**: Offers histogram plots for sentiment distribution and word clouds for keyword visualization, making data interpretation a breeze.
 - **Sleek UI**: Built with Streamlit, offering an intuitive and interactive web application experience.
 - **Cloud-Backed**: Uses Firebase as a robust backend database to store and manage data.
+
+## 🛠 Tech Stack
+
+- **TensorFlow**: For training and deploying the sentiment analysis model.
+- **Selenium & BeautifulSoup**: Powerful tools for web scraping and data extraction.
+- **Streamlit**: Rapidly build and deploy interactive web applications.
+- **Firebase**: Cloud database for real-time data storage and retrieval.
+- **Python**: The backbone of the application, tying all components together.
 
 ## 📚 Data Sources
 
@@ -39,7 +45,3 @@ Dive deep into the world of Netflix original series and movies with Noppo! This 
 ## 🤝 Contributing
 
 We welcome innovators and thinkers! Feel free to fork the repository, make your enhancements, and submit pull requests. Let's make Noppo even better together!
-
----
-
-This enhanced README provides a more vivid and detailed overview of the project. You can further customize it, add images, or any other relevant information. Let me know if you'd like further adjustments!
